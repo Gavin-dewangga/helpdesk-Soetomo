@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Daftar Akun - Helpdesk IT RSUD Dr. Soetomo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Metronic CSS -->
+  <link href="assets/plugins/global/plugins.bundle.css" rel="stylesheet" type="text/css" />
+  <link href="assets/css/style.bundle.css" rel="stylesheet" type="text/css" />
+
+  <style>
+    body {
+      background: linear-gradient(135deg, #f3f6f9 0%, #eef2f8 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .signup-card {
+      width: 100%;
+      max-width: 480px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 5px 25px rgba(0, 0, 0, 0.08);
+      position: relative;
+      z-index: 10;
+      padding: 40px;
+    }
+
+    .signup-header img {
+      width: 90px;
+      margin-bottom: 10px;
+    }
+
+    #kt_body::before,
+    #kt_body::after {
+      pointer-events: none !important;
+    }
+  </style>
+</head>
+
+<body id="kt_body" class="bg-body">
+  <div class="signup-card">
+    <div class="signup-header text-center mb-8">
+      <img src="assets/media/logos/lambangRsds.png" alt="RSUD Dr. Soetomo">
+      <h2 class="fw-bold text-dark mt-3">Helpdesk IT RSUD Dr. Soetomo</h2>
+      <p class="text-muted">Daftar untuk menggunakan sistem helpdesk</p>
+    </div>
+
+    <form id="signupForm" class="form w-100">
+      <div class="fv-row mb-5">
+        <label class="form-label fw-semibold">Username / NIP</label>
+        <input id="username" class="form-control form-control-lg" type="text" placeholder="Masukkan username" required>
+      </div>
+
+      <div class="fv-row mb-5">
+        <label class="form-label fw-semibold">Password</label>
+        <input id="password" class="form-control form-control-lg" type="password" placeholder="Masukkan password" required>
+      </div>
+
+      <div class="fv-row mb-5">
+        <label class="form-label fw-semibold">Pilih Role</label>
+        <select id="role" class="form-select form-select-lg" required>
+          <option value="">-- Pilih Role --</option>
+          <option value="user">User (Pegawai)</option>
+          <option value="admin">Admin / Operator</option>
+          <option value="teknisi">Teknisi IT</option>
+        </select>
+      </div>
+
+      <div class="text-center">
+        <button type="submit" class="btn btn-lg btn-primary w-100 mb-5 fw-bold">Daftar Akun</button>
+        <a href="login.html" class="btn btn-light w-100">Sudah punya akun? Login</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- JS -->
+  <script src="assets/plugins/global/plugins.bundle.js"></script>
+  <script src="assets/js/scripts.bundle.js"></script>
+
+  <script>
+    document.getElementById("signupForm").addEventListener("submit", function(e){
+      e.preventDefault();
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const role = document.getElementById("role").value.trim();
+
+      if (!username || !password || !role) {
+        alert("Harap isi semua field!");
+        return;
+      }
+
+      let accounts = JSON.parse(localStorage.getItem("accounts")) || [];
+
+      if (accounts.find(a => a.username === username)) {
+        alert(" Username sudah terdaftar!");
+        return;
+      }
+
+      accounts.push({ username, password, role });
+      localStorage.setItem("accounts", JSON.stringify(accounts));
+
+      alert(" Akun berhasil dibuat! Silakan login.");
+      window.location.href = "login.html";
+    });
+  </script>
+</body>
+</html>

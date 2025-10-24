@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard Teknisi - Helpdesk RSUD Dr. Soetomo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="assets/plugins/global/plugins.bundle.css" rel="stylesheet" type="text/css" />
+  <link href="assets/css/style.bundle.css" rel="stylesheet" type="text/css" />
+  <style>
+    body {
+      background-color: #f5f8fa;
+    }
+    .navbar {
+      background-color: #ffffff;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      padding: 15px 30px;
+    }
+    .navbar h3 {
+      margin: 0;
+      font-weight: 700;
+      color: #2b2b2b;
+    }
+    .card {
+      border-radius: 12px;
+    }
+    .table img {
+      border-radius: 6px;
+    }
+  </style>
+</head>
+
+<body class="bg-body">
+  <nav class="navbar d-flex justify-content-between align-items-center">
+    <h3>Helpdesk IT RSUD Dr. Soetomo</h3>
+    <div class="d-flex align-items-center">
+      <span class="fw-semibold me-4 text-gray-700">🧑‍🔧
+        <span id="teknisiName"></span></span>
+      <button class="btn btn-sm btn-light-danger fw-bold" id="logoutBtn">Logout</button>
+    </div>
+  </nav>
+
+  <div class="container py-10">
+    <div class="card shadow-sm mb-10">
+      <div class="card-header">
+        <h4 class="card-title fw-bold text-primary">Tugas Anda</h4>
+      </div>
+      <div class="card-body">
+        <table class="table align-middle table-row-dashed table-striped fs-6 gy-5">
+          <thead class="text-gray-600 fw-bold">
+            <tr>
+              <th>No Tiket</th>
+              <th>User</th>
+              <th>Judul</th>
+              <th>Kategori</th>
+              <th>Urgensi</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="taskTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-header">
+        <h4 class="card-title fw-bold text-primary">Riwayat Tugas</h4>
+      </div>
+      <div class="card-body">
+        <table class="table align-middle table-row-dashed table-striped fs-6 gy-5">
+          <thead class="text-gray-600 fw-bold">
+            <tr>
+              <th>No Tiket</th>
+              <th>User</th>
+              <th>Judul</th>
+              <th>Kategori</th>
+              <th>Tanggal</th>
+              <th>Bukti</th>
+            </tr>
+          </thead>
+          <tbody id="historyTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/plugins/global/plugins.bundle.js"></script>
+  <script src="assets/js/scripts.bundle.js"></script>
+
+  <script>
+    const teknisiName = localStorage.getItem("username");
+    const role = localStorage.getItem("role");
+    if (!teknisiName || role !== "teknisi") {
+      window.location.href = "login.html";
+    }
+
+    document.getElementById("teknisiName").textContent = teknisiName;
+
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      localStorage.removeItem("username");
+      localStorage.removeItem("role");
+      window.location.href = "login.html";
+    });
+
+    let reports = JSON.parse(localStorage.getItem("reports")) || [];
+    let history = JSON.parse(localStorage.getItem("history")) || [];
+
+    function renderTasks(){
+      const tbody = document.getElementById("taskTable");
+      tbody.innerHTML = "";
+      const tugas = reports.filter(r => r.teknisi === teknisiName && r.status.includes("Ditugaskan"));
+
+      if (tugas.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">Belum ada tugas aktif.</td></tr>`;
+        return;
+      }
+
+      tugas.forEach((r, i) => {
+        const index = reports.findIndex(x => x === r);
+        const urgensiBadge =
+          r.urgensi === "Tinggi" ? "badge-light-danger" :
+          r.urgensi === "Sedang" ? "badge-light-warning" :
+          "badge-light-success";
+
+        tbody.innerHTML += `
+          <tr>
+            <td>${r.noTiket || "-"}</td>
+            <td>${r.user}</td>
+            <td>${r.judul}</td>
+            <td>${r.kategori || "-"}</td>
+            <td><span class="badge ${urgensiBadge}">${r.urgensi || "-"}</span></td>
+            <td>
+              <input type="file" id="bukti-${index}" accept="image/*" class="form-control form-control-sm mb-2" />
+              <button class="btn btn-success btn-sm" onclick="selesaikan(${index})">Selesaikan</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function renderHistory(){
+      const tbody = document.getElementById("historyTable");
+      tbody.innerHTML = "";
+      const myHistory = history.filter(h => h.teknisi === teknisiName);
+
+      if (myHistory.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">Belum ada riwayat tugas.</td></tr>`;
+        return;
+      }
+
+      myHistory.forEach(r=>{
+        tbody.innerHTML += `
+          <tr>
+            <td>${r.noTiket || "-"}</td>
+            <td>${r.user}</td>
+            <td>${r.judul}</td>
+            <td>${r.kategori || "-"}</td>
+            <td>${r.tanggal}</td>
+            <td>${r.bukti ? `<img src="${r.bukti}" width="80" style="border-radius:6px;">` : "-"}</td>
+          </tr>
+        `;
+      });
+    }
+
+    function selesaikan(i){
+      const fileInput = document.getElementById("bukti-"+i);
+      const file = fileInput.files[0];
+      if(!file){
+        alert("Harap unggah foto bukti penyelesaian terlebih dahulu!");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e){
+        reports[i].status = "Selesai";
+        reports[i].bukti = e.target.result;
+        history.push({...reports[i], tanggal: new Date().toLocaleString()});
+        reports.splice(i,1);
+        save();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function save(){
+      localStorage.setItem("reports", JSON.stringify(reports));
+      localStorage.setItem("history", JSON.stringify(history));
+      renderTasks();
+      renderHistory();
+    }
+
+    renderTasks();
+    renderHistory();
+  </script>
+</body>
+</html>
